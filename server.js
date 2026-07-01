@@ -1,9 +1,14 @@
+const dns = require("dns");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config();
+require("dotenv").config({ override: true });
+
+dns.setServers(["1.1.1.1", "8.8.8.8"]);
 
 const User = require("./models/User");
+const Domain = require("./models/Domain");
+const Subdomain = require("./models/Subdomain");
 const authRoutes = require("./routes/auth");
 const domainRoutes = require("./routes/domains");
 const subdomainRoutes = require("./routes/subdomains");
@@ -15,7 +20,55 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
+function serializePublicDomain(domain) {
+  return {
+    id: domain.id,
+    name: domain.name,
+    hosting: domain.hosting,
+    expiry: domain.expirationDate.toISOString().slice(0, 10),
+    emailCount: domain.emailCount || 0,
+    developer: domain.developer || "Mahad",
+    websiteUrl: domain.websiteUrl || "",
+    logoImage: domain.logoImage || "",
+    websiteStatus: domain.websiteStatus,
+    liveSince: domain.liveSince,
+    downSince: domain.downSince,
+    backupEnabled: Boolean(domain.backupEnabled),
+  };
+}
+
+function serializePublicSubdomain(subdomain) {
+  return {
+    id: subdomain.id,
+    name: subdomain.name,
+    hosting: subdomain.hosting,
+    pm: subdomain.pm,
+    assignedTo: subdomain.assignedTo,
+    projectDate: subdomain.projectDate.toISOString().slice(0, 10),
+    websiteUrl: subdomain.websiteUrl || "",
+    logoImage: subdomain.logoImage || "",
+  };
+}
+
 // Routes
+app.get("/api/public/overview", async (req, res) => {
+  try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+
+    const [domains, subdomains] = await Promise.all([
+      Domain.find({}).sort({ createdAt: -1 }),
+      Subdomain.find({}).sort({ createdAt: -1 }),
+    ]);
+
+    return res.json({
+      domains: domains.map(serializePublicDomain),
+      subdomains: subdomains.map(serializePublicSubdomain),
+    });
+  } catch (error) {
+    console.error("Public overview error:", error.message);
+    return res.status(500).json({ message: "Unable to load public overview." });
+  }
+});
 app.use("/api/auth", authRoutes);
 app.use("/api/domains", domainRoutes);
 app.use("/api/subdomains", subdomainRoutes);
