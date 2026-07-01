@@ -4,7 +4,9 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config({ override: true });
 
-dns.setServers(["1.1.1.1", "8.8.8.8"]);
+if (!process.env.RAILWAY_ENVIRONMENT && process.env.NODE_ENV !== "production") {
+  dns.setServers(["1.1.1.1", "8.8.8.8"]);
+}
 
 const User = require("./models/User");
 const Domain = require("./models/Domain");
@@ -138,11 +140,13 @@ async function seedAdminUsers() {
 
 async function startServer() {
   try {
-    if (!process.env.MONGO_URI) {
+    const mongoUri = process.env.MONGO_URI || process.env.MONGODB_URI || process.env.DATABASE_URL;
+
+    if (!mongoUri) {
       throw new Error("MONGO_URI is missing in environment variables");
     }
 
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(mongoUri);
     console.log("MongoDB connected successfully");
 
     await seedAdminUsers();
