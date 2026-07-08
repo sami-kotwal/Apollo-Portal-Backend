@@ -14,6 +14,16 @@ const portfolioFields = new Set([
   "wordfenceDate",
 ]);
 
+function isAtLeastThirtyDaysOld(dateValue) {
+  if (!dateValue) return false;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const target = new Date(dateValue);
+  target.setHours(0, 0, 0, 0);
+  return Math.floor((today - target) / 86400000) >= 30;
+}
+
 function isTeamLead(user) {
   return user?.username === "mahad" || user?.email === "mahad@northstar.dev";
 }
@@ -32,6 +42,8 @@ function userDeveloperName(user) {
 }
 
 function serializeDomain(domain) {
+  const careUpdateEnabled = domain.careUpdateEnabled === true && !isAtLeastThirtyDaysOld(domain.careUpdateAt);
+
   return {
     id: domain.id,
     name: domain.name,
@@ -45,7 +57,7 @@ function serializeDomain(domain) {
     websiteStatus: domain.websiteStatus,
     liveSince: domain.liveSince,
     downSince: domain.downSince,
-    careUpdateEnabled: domain.careUpdateEnabled !== false,
+    careUpdateEnabled,
     careUpdateAt: domain.careUpdateAt,
     wordfenceDate: domain.wordfenceDate,
     recaptchaEnabled: Boolean(domain.recaptchaEnabled),
@@ -83,8 +95,8 @@ router.post("/", async (req, res) => {
       emailCount: Math.max(0, Number(req.body.emailCount || 0)),
       developer: req.body.developer || "Mahad",
       websiteUrl: String(req.body.websiteUrl || "").trim(),
-      careUpdateEnabled: req.body.careUpdateEnabled !== false,
-      careUpdateAt: req.body.careUpdateAt || new Date(),
+      careUpdateEnabled: Boolean(req.body.careUpdateEnabled),
+      careUpdateAt: req.body.careUpdateEnabled ? (req.body.careUpdateAt || new Date()) : null,
       wordfenceDate: req.body.wordfenceDate || null,
       recaptchaEnabled: Boolean(req.body.recaptchaEnabled),
       backupEnabled: Boolean(req.body.backupEnabled),

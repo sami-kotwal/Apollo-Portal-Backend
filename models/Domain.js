@@ -61,11 +61,11 @@ const domainSchema = new mongoose.Schema(
     },
     careUpdateEnabled: {
       type: Boolean,
-      default: true,
+      default: false,
     },
     careUpdateAt: {
       type: Date,
-      default: Date.now,
+      default: null,
     },
     wordfenceDate: {
       type: Date,

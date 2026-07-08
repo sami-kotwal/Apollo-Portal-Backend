@@ -2,7 +2,7 @@ const dns = require("dns");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-require("dotenv").config({ override: true });
+require("dotenv").config({ override: !process.env.RAILWAY_ENVIRONMENT && process.env.NODE_ENV !== "production" });
 
 if (!process.env.RAILWAY_ENVIRONMENT && process.env.NODE_ENV !== "production") {
   dns.setServers(["1.1.1.1", "8.8.8.8"]);
