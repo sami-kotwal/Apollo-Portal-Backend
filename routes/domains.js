@@ -24,6 +24,14 @@ function isAtLeastThirtyDaysOld(dateValue) {
   return Math.floor((today - target) / 86400000) >= 30;
 }
 
+function careUpdateDateFromBody(body) {
+  if (body.careUpdateAt !== undefined) {
+    return body.careUpdateAt || null;
+  }
+
+  return body.careUpdateEnabled ? new Date() : null;
+}
+
 function isTeamLead(user) {
   return user?.username === "mahad" || user?.email === "mahad@northstar.dev";
 }
@@ -96,7 +104,7 @@ router.post("/", async (req, res) => {
       developer: req.body.developer || "Mahad",
       websiteUrl: String(req.body.websiteUrl || "").trim(),
       careUpdateEnabled: Boolean(req.body.careUpdateEnabled),
-      careUpdateAt: req.body.careUpdateEnabled ? (req.body.careUpdateAt || new Date()) : null,
+      careUpdateAt: careUpdateDateFromBody(req.body),
       wordfenceDate: req.body.wordfenceDate || null,
       recaptchaEnabled: Boolean(req.body.recaptchaEnabled),
       backupEnabled: Boolean(req.body.backupEnabled),
@@ -129,7 +137,9 @@ router.put("/:id", async (req, res) => {
     if (req.body.careUpdateEnabled !== undefined) {
       update.careUpdateEnabled = Boolean(req.body.careUpdateEnabled);
       if (update.careUpdateEnabled) {
-        update.careUpdateAt = new Date();
+        update.careUpdateAt = req.body.careUpdateAt || new Date();
+      } else {
+        update.careUpdateAt = null;
       }
     }
     if (req.body.careUpdateAt !== undefined) {
@@ -221,7 +231,9 @@ router.patch("/:id/website", async (req, res) => {
     if (req.body.careUpdateEnabled !== undefined) {
       update.careUpdateEnabled = Boolean(req.body.careUpdateEnabled);
       if (update.careUpdateEnabled) {
-        update.careUpdateAt = new Date();
+        update.careUpdateAt = req.body.careUpdateAt || new Date();
+      } else {
+        update.careUpdateAt = null;
       }
     }
     if (req.body.careUpdateAt !== undefined) {
